@@ -5,7 +5,6 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 
 const searchBtn = document.querySelector('#search-form');
 const gallery = document.querySelector('.gallery');
-const loadMoreBtn = document.querySelector('.btn-load-more');
 let query = '';
 let page = 1;
 const simpleGallery = new SimpleLightbox('.gallery a');
@@ -17,7 +16,6 @@ const handleSearchBtn = async event => {
     page = 1;
     query = event.currentTarget.searchQuery.value;
     gallery.innerHTML = '';
-    loadMoreBtn.classList.add('is-hidden');
 
     if (query === '') {
       Notiflix.Notify.failure(
@@ -35,14 +33,10 @@ const handleSearchBtn = async event => {
         renderGallery(data.hits);
         simpleGallery.refresh();
         Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
-
-        if (data.totalHits > perPage) {
-          loadMoreBtn.classList.remove('is-hidden');
-        }
       }
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   } finally {
     searchBtn.reset();
   }
@@ -78,8 +72,10 @@ function renderGallery(images) {
     .join('');
   gallery.insertAdjacentHTML('beforeend', markup);
 }
+searchBtn.addEventListener('submit', handleSearchBtn);
 
-const handleLoadMoreBtn = async () => {
+// -----------------INFINITE SCROLL----------------------------
+const infinityScroll = async () => {
   page += 1;
   try {
     const { data } = await fetchImages(query, page, perPage);
@@ -88,16 +84,26 @@ const handleLoadMoreBtn = async () => {
 
     const totalPages = Math.ceil(data.totalHits / perPage);
 
+    const { height: cardHeight } = document
+      .querySelector('.gallery')
+      .firstElementChild.getBoundingClientRect();
+
     if (page > totalPages) {
-      loadMoreBtn.classList.add('is-hidden');
       Notiflix.Notify.failure(
         "We're sorry, but you've reached the end of search results."
       );
     }
   } catch (error) {
-    console.log(error);
+    console.error();
+    error;
   }
 };
 
-searchBtn.addEventListener('submit', handleSearchBtn);
-loadMoreBtn.addEventListener('click', handleLoadMoreBtn);
+window.addEventListener('scroll', () => {
+  if (
+    window.scrollY + window.innerHeight >=
+    document.documentElement.scrollHeight
+  ) {
+    infinityScroll();
+  }
+});

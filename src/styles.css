@@ -104,3 +104,8 @@ button:hover {
   justify-content: center;
   visibility: hidden;
 }
+
+.card.show {
+  transform: translateX(0);
+  opacity: 1;
+}
